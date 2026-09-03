@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система проверки инженерной документации</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #eee;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #00d9ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #eee;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00d9ff;
+            box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+        }
+
+        .file-upload {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: #00d9ff;
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .file-list {
+            margin-top: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #eee;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .check-list {
+            list-style: none;
+        }
+
+        .check-item {
+            padding: 15px;
+            border-left: 4px solid #00d9ff;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .check-item.passed {
+            border-left-color: #00ff88;
+        }
+
+        .check-item.failed {
+            border-left-color: #ff416c;
+        }
+
+        .check-item.skipped {
+            border-left-color: #ffa500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.passed {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-badge.failed {
+            background: rgba(255, 65, 108, 0.2);
+            color: #ff416c;
+        }
+
+        .status-badge.skipped {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
+
+        .issues-section {
+            margin-top: 20px;
+        }
+
+        .critical {
+            color: #ff416c;
+        }
+
+        .non-critical {
+            color: #ffa500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .login-card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .dialog-message {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #00d9ff;
+        }
+
+        .dialog-message.warning {
+            border-left-color: #ffa500;
+        }
+
+        .dialog-message.error {
+            border-left-color: #ff416c;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <h2>Вход в систему</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <header>
+            <div class="container header-content">
+                <h1>🔍 Система проверки инженерной документации</h1>
+                <div class="user-info">
+                    <span id="currentUser"></span>
+                    <button class="btn btn-secondary" onclick="logout()">Выход</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('upload')">Загрузка файлов</button>
+                <button class="tab" onclick="switchTab('results')">Результаты проверок</button>
+                <button class="tab" onclick="switchTab('ntd')">База НТД</button>
+                <button class="tab" onclick="switchTab('users')" id="usersTab">Пользователи</button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="uploadTab" class="tab-content active">
+                <div class="card">
+                    <h2>Загрузка документации для проверки</h2>
+                    <form id="uploadForm">
+                        <div class="form-group">
+                            <label>Режим работы</label>
+                            <select id="workMode">
+                                <option value="local">Локальный (нейросети на сервере)</option>
+                                <option value="cloud">Облачный (облачные нейросети)</option>
+                                <option value="hybrid">Гибридный</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Модель ИИ</label>
+                            <select id="aiModel">
+                                <option value="default">Базовая модель</option>
+                                <option value="advanced">Расширенная модель</option>
+                                <option value="expert">Экспертная модель</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Файлы для проверки</label>
+                            <div class="file-upload" id="fileUpload" onclick="document.getElementById('fileInput').click()">
+                                <p>📁 Перетащите файлы сюда или кликните для выбора</p>
+                                <p style="color: #aaa; margin-top: 10px;">Поддерживаемые форматы: XLS, XLSX, DOC, DOCX, PDF, DWG</p>
+                                <input type="file" id="fileInput" multiple accept=".xls,.xlsx,.doc,.docx,.pdf,.dwg" style="display: none;" onchange="handleFiles(this.files)">
+                            </div>
+                            <div class="file-list" id="fileList"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Начать проверку</button>
+                    </form>
+                    <div id="uploadProgress" class="hidden" style="margin-top: 20px;">
+                        <p>Выполняется проверка...</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="resultsTab" class="tab-content">
+                <div class="card">
+                    <h2>Результаты проверок</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Проект</th>
+                                <th>Режим</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- NTD Tab -->
+            <div id="ntdTab" class="tab-content">
+                <div class="card">
+                    <h2>База нормативно-технических документов</h2>
+                    <button class="btn btn-primary" onclick="openNtdModal()" style="margin-bottom: 20px;">Добавить НТД</button>
+                    <button class="btn btn-secondary" onclick="checkNtdActual()" style="margin-bottom: 20px;">Проверить актуальность</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Код</th>
+                                <th>Наименование</th>
+                                <th>Год</th>
+                                <th>Статус</th>
+                                <th>Категория</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ntdTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content">
+                <div class="card">
+                    <h2>Управление пользователями</h2>
+                    <button class="btn btn-primary" onclick="openUserModal()" style="margin-bottom: 20px;">Добавить пользователя</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Логин</th>
+                                <th>Администратор</th>
+                                <th>Активен</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Результаты проверки</h2>
+                <button class="close-modal" onclick="closeModal('resultModal')">&times;</button>
+            </div>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <!-- NTD Modal -->
+    <div id="ntdModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Добавить/Редактировать НТД</h2>
+                <button class="close-modal" onclick="closeModal('ntdModal')">&times;</button>
+            </div>
+            <form id="ntdForm">
+                <input type="hidden" id="ntdId">
+                <div class="form-group">
+                    <label>Код документа</label>
+                    <input type="text" id="ntdCode" required>
+                </div>
+                <div class="form-group">
+                    <label>Наименование</label>
+                    <input type="text" id="ntdName" required>
+                </div>
+                <div class="form-group">
+                    <label>Год</label>
+                    <input type="number" id="ntdYear" required>
+                </div>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select id="ntdStatus">
+                        <option value="active">Действующий</option>
+                        <option value="obsolete">Отменен</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select id="ntdCategory">
+                        <option value="electrical">Электроснабжение</option>
+                        <option value="lighting">Электроосвещение</option>
+                        <option value="fire">Противопожарные системы</option>
+                        <option value="networks">Сети связи</option>
+                        <option value="video">Видеонаблюдение</option>
+                        <option value="scud">СКУД</option>
+                        <option value="security">Охранная сигнализация</option>
+                        <option value="asu">АСУ/АСУТП</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Содержание</label>
+                    <textarea id="ntdContent" rows="5"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Добавить/Редактировать пользователя</h2>
+                <button class="close-modal" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="userPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="userIsAdmin"> Администратор
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let uploadedFiles = [];
+
+        // Проверка авторизации
+        async function checkAuth() {
+            if (!token) {
+                showLogin();
+                return;
+            }
+            try {
+                const response = await fetch('/info', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    showMainApp();
+                } else {
+                    logout();
+                }
+            } catch (e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadUserData();
+            loadResults();
+            loadNtd();
+            loadUsers();
+        }
+
+        // Логин
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.access_token;
+                    localStorage.setItem('token', token);
+                    showMainApp();
+                } else {
+                    alert('Неверный логин или пароль');
+                }
+            } catch (e) {
+                alert('Ошибка подключения к серверу');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            showLogin();
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch('/info', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('currentUser').textContent = 'Пользователь';
+                    
+                    // Показываем вкладку пользователей только админам
+                    const usersTab = document.getElementById('usersTab');
+                    // В реальной системе нужно проверять права
+                    usersTab.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Переключение вкладок
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Загрузка файлов
+        const fileUpload = document.getElementById('fileUpload');
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            uploadedFiles = [...uploadedFiles, ...Array.from(files)];
+            updateFileList();
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = uploadedFiles.map((file, index) => `
+                <div class="file-item">
+                    <span>${file.name}</span>
+                    <button class="btn btn-danger" style="padding: 5px 10px;" onclick="removeFile(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // Загрузка и проверка
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (uploadedFiles.length === 0) {
+                showDialog('Нет файлов для загрузки', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            uploadedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('mode', document.getElementById('workMode').value);
+            formData.append('ai_model', document.getElementById('aiModel').value);
+
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = '30%';
+
+            try {
+                const response = await fetch('/check/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                progressFill.style.width = '70%';
+
+                if (response.ok) {
+                    const data = await response.json();
+                    progressFill.style.width = '100%';
+                    showDialog(`Проверка завершена. Найдено замечаний: критических - ${data.report.critical_issues.length}, некритических - ${data.report.non_critical_issues.length}`, 'success');
+                    setTimeout(() => {
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                        loadResults();
+                        switchTab('results');
+                        document.querySelector('.tab:nth-child(2)').click();
+                    }, 1000);
+                } else {
+                    throw new Error('Ошибка проверки');
+                }
+            } catch (e) {
+                document.getElementById('uploadProgress').classList.add('hidden');
+                showDialog('Ошибка при выполнении проверки: ' + e.message, 'error');
+            }
+        });
+
+        // Загрузка результатов
+        async function loadResults() {
+            try {
+                const response = await fetch('/check/results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const results = await response.json();
+                    const tbody = document.getElementById('resultsTable');
+                    tbody.innerHTML = results.map(result => `
+                        <tr>
+                            <td>${new Date(result.check_date).toLocaleDateString()}</td>
+                            <td>${result.project_name}</td>
+                            <td>${result.mode}</td>
+                            <td><span class="status-badge ${result.status}">${result.status}</span></td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="viewResult(${result.id})">Просмотр</button>
+                                <button class="btn btn-primary" onclick="exportReport(${result.id}, 'doc')">DOC</button>
+                                <button class="btn btn-primary" onclick="exportReport(${result.id}, 'xls')">XLS</button>
+                                <button class="btn btn-primary" onclick="exportVedomost(${result.id})">Ведомость</button>
+                                ${localStorage.getItem('isAdmin') === 'true' ? `<button class="btn btn-danger" onclick="deleteResult(${result.id})">Удалить</button>` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Просмотр результата
+        async function viewResult(resultId) {
+            try {
+                const response = await fetch(`/check/results/${resultId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = document.getElementById('resultContent');
+                    
+                    let checksHtml = '<ul class="check-list">';
+                    data.checks.forEach(check => {
+                        checksHtml += `
+                            <li class="check-item ${check.status}">
+                                <strong>${check.item_name}</strong>
+                                <span class="status-badge ${check.status}">${check.status}</span>
+                                <p>${check.message}</p>
+                                ${check.ntd_reference ? `<p style="color: #aaa; font-size: 12px;">${check.ntd_reference}</p>` : ''}
+                            </li>
+                        `;
+                    });
+                    checksHtml += '</ul>';
+
+                    let issuesHtml = '';
+                    const critical = JSON.parse(data.result.critical_issues || '[]');
+                    const nonCritical = JSON.parse(data.result.non_critical_issues || '[]');
+
+                    if (critical.length > 0) {
+                        issuesHtml += '<div class="issues-section"><h3 class="critical">Критические замечания:</h3><ul>';
+                        critical.forEach(issue => {
+                            issuesHtml += `<li>${issue}</li>`;
+                        });
+                        issuesHtml += '</ul></div>';
+                    }
+
+                    if (nonCritical.length > 0) {
+                        issuesHtml += '<div class="issues-section"><h3 class="non-critical">Некритические замечания:</h3><ul>';
+                        nonCritical.forEach(issue => {
+                            issuesHtml += `<li>${issue}</li>`;
+                        });
+                        issuesHtml += '</ul></div>';
+                    }
+
+                    // Проверка непройденных проверок
+                    const skipped = data.checks.filter(c => c.status === 'skipped');
+                    if (skipped.length > 0) {
+                        issuesHtml += '<div class="issues-section"><h3>Непроведенные проверки:</h3><ul>';
+                        skipped.forEach(check => {
+                            issuesHtml += `<li><strong>${check.item_name}</strong>: ${check.message}</li>`;
+                        });
+                        issuesHtml += '</ul></div>';
+                    }
+
+                    content.innerHTML = `
+                        <p><strong>Дата:</strong> ${new Date(data.result.check_date).toLocaleString()}</p>
+                        <p><strong>Режим:</strong> ${data.result.mode}</p>
+                        <p><strong>Модель ИИ:</strong> ${data.result.ai_model}</p>
+                        <p><strong>Обработано файлов:</strong> ${JSON.parse(data.result.files_processed || '[]').length}</p>
+                        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                        <h3>Результаты проверок:</h3>
+                        ${checksHtml}
+                        ${issuesHtml}
+                        <div class="dialog-message">
+                            <strong>Итог:</strong> ${data.result.summary}
+                        </div>
+                    `;
+
+                    document.getElementById('resultModal').classList.add('active');
+                }
+            } catch (e) {
+                alert('Ошибка загрузки результата: ' + e.message);
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Экспорт отчетов
+        async function exportReport(resultId, format) {
+            try {
+                const response = await fetch(`/check/results/${resultId}/export/${format}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `report_${resultId}.${format}`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (e) {
+                alert('Ошибка экспорта: ' + e.message);
+            }
+        }
+
+        async function exportVedomost(resultId) {
+            try {
+                const response = await fetch(`/check/results/${resultId}/export/vedomost-xls`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `vedomost_${resultId}.xls`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (e) {
+                alert('Ошибка экспорта: ' + e.message);
+            }
+        }
+
+        async function deleteResult(resultId) {
+            if (!confirm('Удалить результат проверки?')) return;
+            try {
+                const response = await fetch(`/check/results/${resultId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    loadResults();
+                }
+            } catch (e) {
+                alert('Ошибка удаления: ' + e.message);
+            }
+        }
+
+        // НТД
+        async function loadNtd() {
+            try {
+                const response = await fetch('/ntd', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const ntdList = await response.json();
+                    const tbody = document.getElementById('ntdTable');
+                    tbody.innerHTML = ntdList.map(ntd => `
+                        <tr>
+                            <td>${ntd.code}</td>
+                            <td>${ntd.name}</td>
+                            <td>${ntd.year}</td>
+                            <td><span class="status-badge ${ntd.status}">${ntd.status}</span></td>
+                            <td>${ntd.category}</td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="editNtd(${ntd.id})">Ред.</button>
+                                <button class="btn btn-danger" onclick="deleteNtd(${ntd.id})">Удалить</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openNtdModal() {
+            document.getElementById('ntdForm').reset();
+            document.getElementById('ntdId').value = '';
+            document.getElementById('ntdModal').classList.add('active');
+        }
+
+        async function editNtd(ntdId) {
+            try {
+                const response = await fetch(`/ntd/${ntdId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const ntd = await response.json();
+                    document.getElementById('ntdId').value = ntd.id;
+                    document.getElementById('ntdCode').value = ntd.code;
+                    document.getElementById('ntdName').value = ntd.name;
+                    document.getElementById('ntdYear').value = ntd.year;
+                    document.getElementById('ntdStatus').value = ntd.status;
+                    document.getElementById('ntdCategory').value = ntd.category;
+                    document.getElementById('ntdContent').value = ntd.content;
+                    document.getElementById('ntdModal').classList.add('active');
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        document.getElementById('ntdForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ntdId = document.getElementById('ntdId').value;
+            const ntdData = {
+                code: document.getElementById('ntdCode').value,
+                name: document.getElementById('ntdName').value,
+                year: parseInt(document.getElementById('ntdYear').value),
+                status: document.getElementById('ntdStatus').value,
+                category: document.getElementById('ntdCategory').value,
+                content: document.getElementById('ntdContent').value
+            };
+
+            try {
+                const url = ntdId ? `/ntd/${ntdId}` : '/ntd';
+                const method = ntdId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(ntdData)
+                });
+
+                if (response.ok) {
+                    closeModal('ntdModal');
+                    loadNtd();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка сохранения');
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        });
+
+        async function deleteNtd(ntdId) {
+            if (!confirm('Удалить НТД?')) return;
+            try {
+                const response = await fetch(`/ntd/${ntdId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    loadNtd();
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        async function checkNtdActual() {
+            try {
+                const response = await fetch('/ntd/check-actual', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const results = await response.json();
+                    let message = 'Проверка актуальности НТД:\n\n';
+                    results.forEach(item => {
+                        const status = item.in_db ? item.status_db : 'отсутствует в БД';
+                        message += `${item.code}: ${status} (официально: ${item.status_official})\n`;
+                    });
+                    alert(message);
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        // Пользователи
+        async function loadUsers() {
+            try {
+                const response = await fetch('/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const users = await response.json();
+                    const tbody = document.getElementById('usersTable');
+                    tbody.innerHTML = users.map(user => `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.is_admin ? '✓' : ''}</td>
+                            <td>${user.is_active ? '✓' : '✗'}</td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="editUser(${user.id})">Ред.</button>
+                                <button class="btn btn-secondary" onclick="changePassword(${user.id})">Пароль</button>
+                                <button class="btn ${user.is_active ? 'btn-danger' : 'btn-primary'}" onclick="toggleUser(${user.id})">${user.is_active ? 'Заблокировать' : 'Активировать'}</button>
+                                ${user.username !== 'admin' ? `<button class="btn btn-danger" onclick="deleteUser(${user.id})">Удалить</button>` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openUserModal() {
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        async function editUser(userId) {
+            // Упрощенно - только смена пароля
+            changePassword(userId);
+        }
+
+        async function changePassword(userId) {
+            const newPassword = prompt('Введите новый пароль:');
+            if (!newPassword) return;
+
+            const formData = new FormData();
+            formData.append('new_password', newPassword);
+
+            try {
+                const response = await fetch(`/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (response.ok) {
+                    alert('Пароль изменен');
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка');
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        async function toggleUser(userId) {
+            try {
+                const response = await fetch(`/users/${userId}/toggle-active`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    loadUsers();
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Удалить пользователя?')) return;
+            try {
+                const response = await fetch(`/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    loadUsers();
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userData = {
+                username: document.getElementById('userUsername').value,
+                password: document.getElementById('userPassword').value,
+                is_admin: document.getElementById('userIsAdmin').checked
+            };
+
+            try {
+                const response = await fetch('/users', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    closeModal('userModal');
+                    loadUsers();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка создания');
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        });
+
+        // Диалоговые сообщения
+        function showDialog(message, type = 'info') {
+            const dialog = document.createElement('div');
+            dialog.className = `dialog-message ${type}`;
+            dialog.textContent = message;
+            dialog.style.position = 'fixed';
+            dialog.style.top = '20px';
+            dialog.style.right = '20px';
+            dialog.style.zIndex = '2000';
+            dialog.style.minWidth = '300px';
+            document.body.appendChild(dialog);
+            setTimeout(() => dialog.remove(), 5000);
+        }
+
+        // Инициализация
+        checkAuth();
+    </script>
+</body>
+</html>
